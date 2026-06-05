@@ -7,6 +7,7 @@ Personal collection of development and productivity skills for Claude Code.
 | Skill | Description |
 |-------|-------------|
 | `example-skill` | Template skill demonstrating the `SKILL.md` structure. |
+| `github-readme` | Write, draft, or substantially improve a README for a code project or GitHub repo. |
 
 _Add a row here for each new skill._
 
