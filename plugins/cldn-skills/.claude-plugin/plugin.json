@@ -1,0 +1,13 @@
+{
+  "name": "cldn-skills",
+  "description": "Personal collection of development and productivity skills.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Chris Lee",
+    "email": "chrisjlee@rain.xyz"
+  },
+  "homepage": "https://github.com/chrisleedotninja/cldn-marketplace",
+  "repository": "https://github.com/chrisleedotninja/cldn-marketplace",
+  "license": "MIT",
+  "keywords": ["personal", "productivity", "development"]
+}
