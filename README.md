@@ -47,7 +47,8 @@ cldn-marketplace/
 
 1. Create `plugins/<new-plugin>/.claude-plugin/plugin.json`.
 2. Add an entry to the `plugins` array in `.claude-plugin/marketplace.json`
-   with `"source": "<new-plugin>"` (resolved under `pluginRoot: ./plugins`).
+   with `"source": "./plugins/<new-plugin>"` (a relative path from the repo
+   root).
 3. Add skills under `plugins/<new-plugin>/skills/`.
 
 ## Adding a new skill
