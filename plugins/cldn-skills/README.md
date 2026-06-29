@@ -8,6 +8,7 @@ Personal collection of development and productivity skills for Claude Code.
 |-------|-------------|
 | `example-skill` | Template skill demonstrating the `SKILL.md` structure. |
 | `github-readme` | Write, draft, or substantially improve a README for a code project or GitHub repo. |
+| `plaud-router` | Process Plaud voice notes and route them to Todoist, Obsidian, and Google Calendar. |
 
 _Add a row here for each new skill._
 

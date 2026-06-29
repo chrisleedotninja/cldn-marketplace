@@ -1,0 +1,46 @@
+# plaud-router configuration template
+#
+# Copy this file, fill in every placeholder once, then save it to:
+#   ~/.plaud-router/config.yaml
+# Placeholders are written as REPLACE_ME or <...>; replace them all.
+
+# --- Todoist -----------------------------------------------------------------
+todoist:
+  # Personal Todoist API token. Find it in Todoist:
+  # Settings → Integrations → Developer → API token.
+  api_token: REPLACE_ME            # e.g. "0123456789abcdef0123456789abcdef01234567"
+
+# --- Obsidian ----------------------------------------------------------------
+obsidian:
+  # Name of the Obsidian vault that notes are written into.
+  vault: <your-vault-name>          # e.g. "Personal"
+  # Target folders inside the vault, one per classification destination.
+  folders:
+    ideas: Ideas                    # captured ideas / fleeting thoughts
+    meetings: Meetings              # meeting notes
+    inbox: Inbox                    # catch-all for anything unclassified
+
+# --- Google Calendar ---------------------------------------------------------
+calendar:
+  # Calendar id that time-bound items become events on.
+  # Use "primary" for your default calendar, or the calendar's address.
+  id: primary                       # e.g. "primary" or "you@example.com"
+
+# --- State -------------------------------------------------------------------
+# Path to the state file that records which recordings have been processed,
+# so re-runs are idempotent. Default per parent design:
+state_file: ~/.plaud-router/state.json
+
+# --- Classification ----------------------------------------------------------
+# Tunable rubric that drives the classify stage. Edit the rules/prompt below to
+# change how recordings are sorted into task / idea / meeting / event / inbox.
+classification:
+  # Free-form prompt/rules block. Keep it specific; the classifier reads it
+  # verbatim to decide each recording's destination.
+  rubric: |
+    REPLACE_ME — describe how to classify each recording. For example:
+    - If it states a concrete action or deadline -> task (Todoist).
+    - If it captures a thought or concept -> idea (Obsidian/Ideas).
+    - If it summarizes a conversation with others -> meeting (Obsidian/Meetings).
+    - If it names a date/time to be somewhere -> event (Google Calendar).
+    - Otherwise -> inbox (Obsidian/Inbox).
