@@ -200,3 +200,170 @@ Hand the fetched transcript (and summary, when used) to the **classify** stage.
 Only after a recording has been acted on does the **record** stage add its id to
 the state file — that is what keeps not-ready-then-skipped recordings eligible
 for a future run.
+
+## Routing (act)
+
+Stage 3 takes each classified recording and performs the **destination action**
+for every category the classify stage assigned to it. There are five locked
+categories and each routes to exactly one destination:
+
+| Category  | Destination | How it is written |
+| --------- | ----------- | ----------------- |
+| `todo`    | **Todoist** (personal todos only) | `POST https://api.todoist.com/api/v1/tasks` (REST API v1), `Authorization: Bearer <token>`. |
+| `meeting` | **Obsidian** meeting note | Markdown note in the vault's `meetings` folder; action items kept as `- [ ]` checkboxes. |
+| `idea`    | **Obsidian** idea note | Markdown note in the vault's `ideas` folder. |
+| `event`   | **Google Calendar** event | Created via the already-wired **Google Calendar MCP**. |
+| `inbox`   | **Obsidian** triage note | Markdown note in the vault's `inbox` folder for later manual triage. |
+
+Because a recording may carry **more than one** label (see *Multi-label
+assignment*), the act stage performs each assigned destination action in turn —
+a recording labelled both `meeting` and `todo` writes the meeting note *and*
+creates the personal Todoist task.
+
+### `todo` → Todoist (REST v1, Bearer, personal only)
+
+Create the task with the Todoist REST API v1:
+
+```bash
+curl -X POST "https://api.todoist.com/api/v1/tasks" \
+  -H "Authorization: Bearer $TODOIST_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Renew the car insurance", "due_string": "Friday"}'
+```
+
+The token is the **personal** Todoist API token from `todoist.api_token` in
+`config.template.yaml`. Only the `todo` category — **personal** todos — creates
+Todoist tasks; nothing else routes here.
+
+### `event` → Google Calendar
+
+Time-bound recordings become events on the calendar named by `calendar.id` in
+`config.template.yaml`, created through the **Google Calendar MCP** that is
+already wired into this environment (no extra credentials to manage). Set the
+event title from the recording, the start/end from the spoken date/time, and the
+description to include the source recording id (see *Duplicate safety*).
+
+### `meeting` → Obsidian meeting note (action items stay as checkboxes)
+
+A `meeting` recording writes a markdown note into the vault's `meetings` folder
+(summary + decisions + action items). Its **action items do NOT become Todoist
+tasks** — they are work follow-ups tracked in the note itself. Render each one as
+a markdown checkbox inside the meeting note and keep it out of Todoist:
+
+```markdown
+## Action items
+- [ ] Draft the changelog (owner: me)
+- [ ] Follow up with Raj on the beta date
+```
+
+Only the `todo` category creates Todoist tasks; a meeting's follow-ups stay as
+`- [ ]` checkboxes and are deliberately **kept out of Todoist**.
+
+### Obsidian writes (`meeting`, `idea`, `inbox`): CLI primary, direct write fallback
+
+The three Obsidian destinations — `meeting`, `idea`, and `inbox` — all write a
+markdown note into the vault named by `obsidian.vault`, into the folder for that
+category (`obsidian.folders.meetings` / `.ideas` / `.inbox`). Each has two write
+paths:
+
+1. **Primary — the `obsidian` CLI.** When the Obsidian **app is running**, write
+   through the `obsidian` CLI; it returns JSON and keeps the live app's index in
+   sync. This is the preferred path.
+
+   ```bash
+   obsidian create --vault "$VAULT" --path "Ideas/2026-06-21 router retries.md" --content "$BODY"
+   ```
+
+2. **Fallback — a direct `.md` vault-file write.** When the **app is closed** (or
+   the CLI is unavailable), fall back to writing the `.md` file **directly** into
+   the vault folder on disk. This works without the app running and is the safe
+   path under Cowork's isolated VM:
+
+   ```bash
+   printf '%s' "$BODY" > "$VAULT_DIR/Ideas/2026-06-21 router retries.md"
+   ```
+
+Try the CLI **primary** path first; if the app is closed or the CLI errors, use
+the direct vault-file-write **fallback**. Both produce the same note with the
+same frontmatter (see *Duplicate safety*).
+
+## Duplicate safety
+
+Dedup is **belt-and-suspenders**: two independent layers so that a recording is
+never acted on twice, even if one layer fails.
+
+**Layer 1 — the `state.json` of processed ids.** The skill keeps a
+`state.json` (at the `state_file` path from `config.template.yaml`, default
+`~/.plaud-router/state.json`) listing every recording id it has already
+processed. The ingest stage diffs against it and the **record** stage writes to
+it, so the normal run skips anything already handled.
+
+**Layer 2 — stamp the Plaud recording id into every artifact.** Independently of
+the state file, the source recording id is **stamped into every artifact** the
+act stage creates, in all three destination types:
+
+- **Todoist** — the recording id is written into the **task description**.
+- **Obsidian** — the recording id is written into the note's **frontmatter** as
+  `plaud_id:`:
+
+  ```markdown
+  ---
+  plaud_id: a1b2c3d4e5
+  ---
+  ```
+
+- **Google Calendar** — the recording id is written into the Calendar **event
+  description** (the event description field).
+
+The two layers are independent on purpose: **even if the `state.json` is ever
+lost** or corrupted, the stamped `plaud_id` on each artifact still lets a
+recovery scan detect what was already created, so nothing is duplicated.
+
+## Record
+
+Stage 4 closes the idempotency loop. After the act stage has created the
+artifacts for a recording, the record step:
+
+1. **Marks the recording id as `processed`** in the `state.json` (the same file
+   the ingest stage diffs against), together with **what was created** — the
+   destination links and file **paths** (the Todoist task URL/id, the Obsidian
+   note path, the Calendar event link) so the outcome is auditable, not just a
+   bare id. For example:
+
+   ```json
+   {
+     "processed": [
+       {
+         "id": "a1b2c3d4e5",
+         "processed_at": "2026-06-21T09:20:00Z",
+         "created": {
+           "todoist": "https://todoist.com/showTask?id=...",
+           "obsidian": "Meetings/2026-06-21 standup.md",
+           "calendar": "https://calendar.google.com/event?eid=..."
+         }
+       }
+     ]
+   }
+   ```
+
+2. **Appends a run log** line for the run — a human-readable record of which
+   recordings were processed, what was created (links/paths), and which were
+   skipped (e.g. transcript not ready). The run log is **append-only** so each
+   run leaves a durable trail.
+
+Only after this record step adds the id does the next run's ingest diff skip the
+recording — a recording that was skipped (e.g. not-ready transcript) is
+deliberately **not** marked `processed`, so it is retried on a later run.
+
+## Scheduling
+
+The router is **invocation-agnostic** — it behaves identically however it is
+started, because each run reads its work list from Plaud and the `state.json`
+and the dedup layers make repeated runs safe. The current mode is **manual**
+(run it by hand); it can also be driven on a schedule by local `launchd`/`cron`
+or by a Cowork scheduled task.
+
+The three modes differ only in reliability and which resources the run can see —
+notably, under Cowork's isolated VM the Obsidian CLI is unavailable, so the
+**direct vault-file write** is the safe path there. See
+`references/scheduling.md` for each mode and its tradeoffs.
