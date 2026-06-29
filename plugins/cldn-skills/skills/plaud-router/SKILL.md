@@ -26,7 +26,69 @@ docs.
 4. **record** — append the recording's id and outcome to the state file so the
    next run skips it (idempotency).
 
-## Configuration
+## Classification
+
+Stage 2 decides **what each new recording is** and therefore where it should go.
+There are five locked categories. Each recording is examined and assigned to one
+(or more — see *Multi-label*) of them:
+
+| Category  | Distinguishing cue | Short example | Destination |
+| --------- | ------------------ | ------------- | ----------- |
+| `todo`    | States a concrete **personal** action or deadline the speaker intends to do. | "Remind me to renew the car insurance before Friday." | Todoist task (personal todos only). |
+| `meeting` | Recaps a conversation **with other people** — decisions made, who said what, follow-ups. | "Synced with Dana and Raj; we agreed to ship the beta next sprint, I'll draft the changelog." | Obsidian meeting note (summary + decisions + action items as `- [ ]` checkboxes). |
+| `idea`    | Captures a thought, concept, or insight with no immediate action. | "What if onboarding had a guided first-run tour?" | Obsidian idea note (cleaned-up idea + summary). |
+| `event`   | Names a **date/time to be somewhere** or a scheduled commitment. | "Dentist appointment next Tuesday at 3pm." | Google Calendar event. |
+| `inbox`   | Anything the classifier is **not confident** about — the low-confidence fallback. | "...mumbled, half-finished thought that fits nothing cleanly." | Obsidian inbox note for manual triage. |
+
+### How classification is decided
+
+Classification is **LLM-driven from the transcript content alone**. Plaud exposes
+**no recording "type" field** — there is no metadata flag that tells you whether a
+recording is a todo, a meeting, an idea, or an event — so the category is inferred
+by the LLM reading the transcript (and summary, when available), not looked up.
+
+The LLM applies the **tunable rubric** from the config's `classification.rubric`
+block (see `config.template.yaml`). That rubric block is the live, user-editable
+copy of the rules; edit it to change how recordings are sorted. The classifier
+reads it verbatim, so tuning the rubric tunes the behavior without code changes.
+
+The full, editable rules — every category's cues and examples, the multi-label
+rule, the inbox fallback, and the meeting-checkbox rule — live in
+`references/classification-rubric.md`. Edit that doc to shape classification
+behavior, then mirror the rules into the config's `classification.rubric` block.
+
+### Multi-label assignment
+
+A single recording may belong to **more than one** category (multi-label). For
+example, a recording that recaps a meeting *and* states a personal action you
+must take maps to both `meeting` and `todo`. Assign every category that genuinely
+applies rather than forcing a single choice; the act stage then performs each
+destination action in turn.
+
+### Meeting action items stay as checkboxes
+
+Meetings are work-related and tracked elsewhere, so a `meeting` recording's
+**action items do NOT become Todoist tasks**. Instead, render each action item as
+a markdown checkbox inside the Obsidian meeting note:
+
+```markdown
+## Action items
+- [ ] Draft the changelog (owner: me)
+- [ ] Follow up with Raj on the beta date
+```
+
+Only the `todo` category — personal todos — creates Todoist tasks. A meeting's
+follow-ups remain `- [ ]` checkboxes in the note and never go to Todoist.
+
+### Inbox: the low-confidence fallback
+
+When the classifier is **low-confidence** — the transcript does not clearly fit
+any of `todo`, `meeting`, `idea`, or `event` — it falls back to `inbox` rather
+than guessing. `inbox` is the catch-all so that **no recording is dropped**:
+every processed recording lands somewhere a human can triage it later. If
+nothing else applies, classify as `inbox`; nothing is silently discarded.
+
+
 
 All runtime settings live in a single config file you fill in once. Copy the
 bundled template, save it where the skill expects it, and replace every
