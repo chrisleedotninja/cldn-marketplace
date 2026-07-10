@@ -48,11 +48,12 @@ CWD=$(python3 -c 'import os,sys; print(os.path.expanduser(sys.argv[1]))' "~/.con
 
 Otherwise, split `<location>` on `/` and check its **first segment** (plus any
 obvious keyword in the request, e.g. "a brainstorm session") against the **alias
-map** below. An alias points at a container root:
+map** below. Replace the alias segment with its base directory and append any
+remaining path segments unchanged. The `<label>` names the workspace only — it is
+**never** turned into a subfolder.
 
+- bare `brainstorms` → `<base>` → `~/brainstorms` (workspace labeled `<label>`)
 - `brainstorms/foo` → `<base>/foo` → `~/brainstorms/foo`
-- bare `brainstorms` (no remainder) → per-session subfolder `<base>/<label>` →
-  `~/brainstorms/<label>` (if used without a `<label>`, ask for one first)
 
 **Alias map** — edit this table to add your own mappings:
 
