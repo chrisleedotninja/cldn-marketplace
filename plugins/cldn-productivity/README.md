@@ -7,6 +7,7 @@ Personal collection of productivity and workflow skills for Claude Code.
 | Skill | Description |
 |-------|-------------|
 | `projects` | Manage personal projects across Obsidian (`800-Projects/`) and Todoist via the `td` and `obsidian` CLIs — create, add/list tasks, find, status, and archive. |
+| `plaud-router` | Process Plaud voice notes and route them to Todoist, Obsidian, and Google Calendar. |
 
 ## Adding a skill
 
