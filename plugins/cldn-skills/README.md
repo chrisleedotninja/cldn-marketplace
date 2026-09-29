@@ -8,7 +8,6 @@ Personal collection of development and productivity skills for Claude Code.
 |-------|-------------|
 | `example-skill` | Template skill demonstrating the `SKILL.md` structure. |
 | `github-readme` | Write, draft, or substantially improve a README for a code project or GitHub repo. |
-| `herdr-workspace` | Spin up a new herdr workspace/session running a fresh Claude instance at a repo, aliased folder, or explicit path. |
 
 _Add a row here for each new skill._
 
