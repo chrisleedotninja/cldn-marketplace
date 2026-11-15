@@ -19,6 +19,16 @@ To pick up later updates:
 /plugin marketplace update cldn-marketplace
 ```
 
+## Plugins
+
+| Plugin | What it does |
+| --- | --- |
+| `cldn-skills` | Personal development and productivity skills. |
+| `cldn-productivity` | Personal productivity and workflow skills. |
+| [`quiet-transcript`](plugins/quiet-transcript/README.md) | A mod that hides tool rows, output and diffs. Run `/quiet on` or `/quiet off`. |
+
+To install `quiet-transcript`, run `/plugin install quiet-transcript@cldn-marketplace`.
+
 ## Structure
 
 ```
