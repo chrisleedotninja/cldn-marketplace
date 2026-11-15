@@ -2,6 +2,6 @@ export type Quiet = boolean
 
 declare module 'claude-code' {
   interface PluginState {
-    'quiet-transcript': { isQuiet: Quiet }
+    'quiet-transcript': { isQuiet: Quiet; showStatus: boolean }
   }
 }

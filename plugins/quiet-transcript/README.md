@@ -25,7 +25,11 @@ Hiding is on when a session starts. The status line shows `quiet` while hiding i
 
 - Run `/quiet off` to show tool output.
 - Run `/quiet on` to hide tool output.
+- Run `/quiet status off` to remove the `quiet` entry from the status line.
+- Run `/quiet status on` to show the `quiet` entry again.
 - Run `/quiet` with no argument to see the current state.
+
+The status line entry shows only while hiding is on. `/quiet status off` removes the entry but keeps hiding on.
 
 To see one hidden row without turning hiding off, press ctrl+o. The ctrl+o transcript and `--verbose` always show everything.
 

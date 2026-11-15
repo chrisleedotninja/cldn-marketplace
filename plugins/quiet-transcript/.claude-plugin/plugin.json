@@ -1,7 +1,7 @@
 {
   "name": "quiet-transcript",
   "description": "Hide tool rows, tool output and diffs so the transcript shows only prompts and replies. Switch with /quiet on and /quiet off.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "Chris Lee",
     "email": "chrisjlee@rain.xyz"
